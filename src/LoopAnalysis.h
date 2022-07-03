@@ -11,29 +11,6 @@
 namespace SVF {
 
 template<typename GraphT>
-struct GraphTrait {
-    typedef typename  GraphT::NodeType *NodeRef;
-    typedef typename  GraphT::NodeType::iterator SuccessorNodeIterator;
-    typedef typename  GraphT::NodeType::iterator PredecessorNodeIterator;
-
-    static SuccessorNodeIterator successor_begin(NodeRef node) {
-        return node->OutEdgeBegin();
-    }
-
-    static SuccessorNodeIterator successor_end(NodeRef node) {
-        return node->OutEdgeEnd();
-    }
-
-    static PredecessorNodeIterator predecessor_begin(NodeRef node) {
-        return node->InEdgeBegin();
-    }
-
-    static PredecessorNodeIterator predecessor_end(NodeRef node) {
-        return node->InEdgeEnd();
-    }
-};
-
-template<typename GraphT>
 class LoopAnalysis {
 public:
     typedef typename  GraphT::NodeType NodeT;
@@ -63,29 +40,7 @@ public:
 
     LoopAnalysis operator=(LoopAnalysis &&) = delete;
 
-    virtual void run() {
-        for (auto it = wtoT.headBegin(), eit = wtoT.headEnd(); it != eit; ++it) {
-            const NodeT *head = it->first;
-            const WtoNestingT& cycle_nesting = wtoT.nesting(head);
-            for (const auto &edge: head->getInEdges()) {
-                const NodeT *pre = edge->getSrcNode();
-                if (wtoT.nesting(pre) <= cycle_nesting) {
-                    headToEntryEdges[head].insert(edge);
-                } else {
-                    headToBackEdges[head].insert(edge);
-                }
-                for (const auto &tail: wtoT.getTails(head)) {
-                    const WtoNestingT &tail_nesting = wtoT.nesting(tail);
-                    for (const auto &e: tail->getOutEdges()) {
-                        const NodeT *out = e->getDstNode();
-                        if (wtoT.nesting(out) < tail_nesting) {
-                            tailToExitEdges[tail].insert(e);
-                        }
-                    }
-                }
-            }
-        }
-    }
+    virtual void run();
 
     const WtoT& wto() const {
         return wtoT;

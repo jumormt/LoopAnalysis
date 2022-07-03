@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE loopTest
 #define BOOST_TEST_DYN_LINK
 #include "ECG.h"
-#include "LoopAnalysis.h"
+#include "LoopAnalysis.cpp"
 #include <boost/test/unit_test.hpp>
 
 using namespace llvm;

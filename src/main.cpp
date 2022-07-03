@@ -6,7 +6,7 @@
 #include "WPA/Andersen.h"
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
-#include "LoopAnalysis.h"
+#include "LoopAnalysis.cpp"
 
 using namespace llvm;
 using namespace std;
