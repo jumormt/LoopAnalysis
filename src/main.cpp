@@ -8,6 +8,7 @@
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
 #include "EC.hpp"
+#include "LoopAnalysis.h"
 
 using namespace llvm;
 using namespace std;
@@ -16,6 +17,7 @@ using namespace SVF;
 typedef ECDetection<ICFG*> ICFGECD;
 typedef SCCDetection<ECG *> ECGSCC;
 typedef ECDetection<ECG*> ECD;
+typedef SVF::LoopAnalysis<ECG> ECGLoopAnalysis;
 
 void test01() {
     SVFUtil::outs() << "test1:\n";
@@ -33,11 +35,11 @@ void test01() {
                        {6, 2}};
     ecg->addECGEdgesFromVector(nPV);
     ecg->dump("test01");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-    delete johnsonDetection;
-    delete ecg;
-    // assert(dfs(ecg->getECGNode(1), ecg->getECGNode(6)) == )
+    ECGLoopAnalysis loopAnalysis(ecg, ecg->getECGNode(1));
+    loopAnalysis.run();
+    outs() << loopAnalysis.wto().toString();
+    SVF::LoopAnalysis<ECG>::EdgeRefList &edgeSet = loopAnalysis.getEntryEdgeRefList(2);
+    return;
 }
 
 void test02() {
