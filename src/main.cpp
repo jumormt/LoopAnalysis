@@ -7,7 +7,7 @@
 #include "WPA/Andersen.h"
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
-#include "EC.h"
+#include "EC.hpp"
 
 using namespace llvm;
 using namespace std;

@@ -1,4 +1,4 @@
-//===- EC.h -- Elementary Circle detection algorithm---------------------------------------//
+//===- EC.hpp -- Elementary Circle detection algorithm---------------------------------------//
 //
 //                     SVF: Static Value-Flow Analysis
 //
