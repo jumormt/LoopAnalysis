@@ -1,18 +1,4 @@
-# Static Symbolic Execution on SVF using Z3
-## Build
-
-### Method 1 
-` bash build.sh `
-### Method 2
-- required ENV: [`$LLVM_DIR`](https://releases.llvm.org/download.html) , [`$SVF_DIR`](https://github.com/SVF-tools/SVF) and [`$Z3_DIR`](https://github.com/Z3Prover/z3/releases/tag/z3-4.8.10)
-- ` cmake -g -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/home/SVF-tools/SVF/llvm-12.0.0.obj -DSVF_DIR=/home/SVF-tools/SVF -DZ3_DIR=/home/z3`
-
- (Currently can use [LLVM-12](https://github.com/llvm/llvm-project/releases/tag/llvmorg-12.0.0))
-
-## Folders
-- Test demo code in svf-ex
-- Symbolic execution in sse
-
+# SVF Loop Analysis
 
 ### LLVM Series
 
