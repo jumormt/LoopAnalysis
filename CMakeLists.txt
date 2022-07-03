@@ -78,6 +78,16 @@ set(Z3_HEADER "${Z3_DIR}/include/")
 include_directories(${Z3_HEADER})
 LINK_DIRECTORIES(${Z3_DIR}/bin)
 
+set(CUSTOM_BOOST_ROOT "" CACHE PATH "Path to custom boost installation")
+if (CUSTOM_BOOST_ROOT)
+    set(BOOST_ROOT "${CUSTOM_BOOST_ROOT}")
+    set(Boost_NO_SYSTEM_PATHS TRUE)
+endif()
+
+find_package(Boost 1.55.0 REQUIRED
+        COMPONENTS unit_test_framework)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+
 # googletest
 # add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
 #                  ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
@@ -87,9 +97,13 @@ LINK_DIRECTORIES(${Z3_DIR}/bin)
 add_subdirectory(src)
 
 # checks if the test-suite is present, if it is then build bc files and add testing to cmake build
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Test-Suite")
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Test-Suite)
-    enable_testing()
-    add_subdirectory(Test-Suite)
-    include(CTest)
-endif()
+#if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Test-Suite")
+#    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Test-Suite)
+#    enable_testing()
+#    add_subdirectory(Test-Suite)
+#    include(CTest)
+#endif()
+enable_testing()
+add_custom_target(check
+        COMMAND ${CMAKE_CTEST_COMMAND}
+        DEPENDS loop-analysis-tests)

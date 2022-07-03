@@ -151,6 +151,14 @@ public:
         return rawstr.str();
     }
 
+    /// Overloading operator << for dumping ICFG node ID
+    //@{
+    friend llvm::raw_ostream &operator<<(llvm::raw_ostream &o, const WtoNesting<GraphT> &wto) {
+        o << wto.toString();
+        return o;
+    }
+    //@}
+
 }; // end class WtoNesting
 
 
@@ -193,6 +201,14 @@ public:
     }
 
     virtual std::string toString() const = 0;
+
+    /// Overloading operator << for dumping ICFG node ID
+    //@{
+    friend llvm::raw_ostream &operator<<(llvm::raw_ostream &o, const WtoComponent<GraphT> &wto) {
+        o << wto.toString();
+        return o;
+    }
+    //@}
 
     WtoCT type;
 
@@ -247,7 +263,7 @@ public:
     typedef WtoComponent<GraphT> WtoComponentT;
 
 private:
-    typedef std::unique_ptr<WtoComponentT> WtoComponentPtr;
+    typedef const WtoComponentT *WtoComponentPtr;
     typedef std::list<WtoComponentPtr> WtoComponentRefList;
 
 public:
@@ -361,11 +377,14 @@ public:
     typedef WtoComponent<GraphT> WtoComponentT;
     typedef WtoVertex<GraphT> WtoVertexT;
     typedef WtoCycle<GraphT> WtoCycleT;
+    typedef Set<const NodeT *> NodeRefList;
 
 private:
-    typedef std::unique_ptr<WtoComponentT> WtoComponentPtr;
+    typedef const WtoComponentT *WtoComponentPtr;
     typedef std::list<WtoComponentPtr> WtoComponentRefList;
-    typedef Set<const NodeT *> NodeRefList;
+    typedef Set <WtoComponentPtr> WtoComponentRefSet;
+    typedef Map<const NodeT *, const WtoCycleT *> NodeRefToWtoCycleMap;
+    typedef Map<const NodeT *, NodeRefList> NodeRefTONodeRefListMap;
 
     typedef u32_t Dfn;
     typedef Map<const NodeT *, Dfn> DfnTable;
@@ -379,11 +398,111 @@ public:
 
 private:
     WtoComponentRefList _components;
-    NodeRefList heads;
+    WtoComponentRefSet _allComponents;
+    NodeRefToWtoCycleMap headRefToCycle;
+    NodeRefTONodeRefListMap headRefToTails;
     NestingTable _nesting_table;
     DfnTable _dfn_table;
     Dfn _num;
     Stack _stack;
+
+public:
+    /// \brief Compute the weak topological order of the given graph
+    explicit Wto(const NodeT *entry) : _num(0) {
+        visit(entry, _components);
+        _dfn_table.clear();
+        _stack.clear();
+        build_nesting();
+        build_tails();
+    }
+
+    /// \brief No copy constructor
+    Wto(const Wto &other) = delete;
+
+    /// \brief Move constructor
+    Wto(Wto &&other) = default;
+
+    /// \brief No copy assignment operator
+    Wto &operator=(const Wto &other) = delete;
+
+    /// \brief Move assignment operator
+    Wto &operator=(Wto &&other) = default;
+
+    /// \brief Destructor
+    ~Wto() {
+        for (const auto &component: _allComponents) {
+            delete component;
+        }
+    }
+
+    /// \brief Begin iterator over the components
+    /// \brief Begin iterator over the components
+    Iterator begin() const {
+        return _components.cbegin();
+    }
+
+    /// \brief End iterator over the components
+    Iterator end() const {
+        return _components.cend();
+    }
+
+    bool isHead(const NodeT *node) const {
+        return headRefToCycle.find(node) != headRefToCycle.end();
+    }
+
+    typename NodeRefToWtoCycleMap::const_iterator headBegin() const {
+        return headRefToCycle.cbegin();
+    }
+
+    /// \brief End iterator over the components
+    typename NodeRefToWtoCycleMap::const_iterator headEnd() const {
+        return headRefToCycle.cend();
+    }
+
+    const NodeRefList &getTails(const NodeT *node) const {
+        auto it = headRefToTails.find(node);
+        assert(it != headRefToTails.end() && "node not found");
+        return it->second;
+    }
+
+
+    /// \brief Return the nesting of the given node
+    const WtoNestingT &nesting(const NodeT *n) const {
+        auto it = _nesting_table.find(n);
+        assert(it != _nesting_table.end() && "node not found");
+        return *(it->second);
+    }
+
+    /// \brief Accept the given visitor
+    void accept(WtoComponentVisitor<GraphT> &v) {
+        for (const auto &c: _components) {
+            c->accept(v);
+        }
+    }
+
+    /// \brief Dump the order, for debugging purpose
+    std::string toString() const {
+        std::string str;
+        raw_string_ostream rawstr(str);
+        rawstr << "[";
+        for (auto it = begin(), et = end(); it != et;) {
+            rawstr << (*it)->toString();
+            ++it;
+            if (it != et) {
+                rawstr << ", ";
+            }
+        }
+        rawstr << "]";
+        return rawstr.str();
+    }
+
+    /// Overloading operator << for dumping ICFG node ID
+    //@{
+    friend llvm::raw_ostream &operator<<(llvm::raw_ostream &o, const Wto<GraphT> &wto) {
+        o << wto.toString();
+        return o;
+    }
+    //@}
 
 private:
     /// \brief Visitor to build the nestings of each node
@@ -417,6 +536,47 @@ private:
 
     }; // end class NestingBuilder
 
+    /// \brief Visitor to build the tails of each head/loop
+    class TailBuilder final : public WtoComponentVisitor<GraphT> {
+    private:
+        NodeRefList &_tails;
+        const WtoNestingT &_headNesting;
+        const NodeT *_head;
+        NestingTable &_nesting_table;
+
+    public:
+
+        explicit TailBuilder(NestingTable &nesting_table, NodeRefList &tails, const NodeT *head,
+                             const WtoNestingT &headNesting) : _nesting_table(
+                nesting_table), _head(head), _tails(tails), _headNesting(headNesting) {
+        }
+
+        void visit(const WtoCycleT &cycle) override {
+            for (auto it = cycle.begin(), et = cycle.end(); it != et; ++it) {
+                (*it)->accept(*this);
+            }
+        }
+
+        void visit(const WtoVertexT &vertex) override {
+            for (const auto &edge: vertex.node()->getOutEdges()) {
+                const NodeT *succ = edge->getDstNode();
+                const WtoNestingT &succNesting = nesting(succ);
+                if (succ != _head && succNesting <= _headNesting) {
+                    _tails.insert(vertex.node());
+                }
+            }
+        }
+
+    private:
+        /// \brief Return the nesting of the given node
+        const WtoNestingT &nesting(const NodeT *n) const {
+            auto it = _nesting_table.find(n);
+            assert(it != _nesting_table.end() && "node not found");
+            return *(it->second);
+        }
+
+    };
+
 private:
     /// \brief Return the depth-first number of the given node
     Dfn dfn(const NodeT *n) const {
@@ -447,9 +607,20 @@ private:
     /// \brief Push a node on the stack
     void push(const NodeT *n) { _stack.push_back(n); }
 
+    const WtoVertexT *newVertex(const NodeT *node) {
+        const WtoVertexT *ptr = new WtoVertexT(node);
+        _allComponents.insert(ptr);
+        return ptr;
+    }
+
+    const WtoCycleT *newCycle(const NodeT *node, const WtoComponentRefList &partition) {
+        const WtoCycleT *ptr = new WtoCycleT(node, std::move(partition));
+        _allComponents.insert(ptr);
+        return ptr;
+    }
+
     /// \brief Create the cycle component for the given vertex
-    WtoComponentPtr component(const NodeT *vertex) {
-        heads.insert(vertex);
+    const WtoCycleT *component(const NodeT *vertex) {
         WtoComponentRefList partition;
         for (auto it = vertex->OutEdgeBegin(), et = vertex->OutEdgeEnd(); it != et; ++it) {
             const NodeT *succ = (*it)->getDstNode();
@@ -457,7 +628,9 @@ private:
                 visit(succ, partition);
             }
         }
-        return std::make_unique<WtoCycleT>(vertex, std::move(partition));
+        const WtoCycleT *ptr = newCycle(vertex, partition);
+        headRefToCycle.emplace(vertex, ptr);
+        return ptr;
     }
 
     /// \brief Visit the given node
@@ -496,7 +669,7 @@ private:
                 }
                 partition.push_front(component(vertex));
             } else {
-                partition.push_front(std::make_unique<WtoVertexT>(vertex));
+                partition.push_front(newVertex(vertex));
             }
         }
         return head;
@@ -510,83 +683,16 @@ private:
         }
     }
 
-public:
-    /// \brief Compute the weak topological order of the given graph
-    explicit Wto(const NodeT *entry) : _num(0) {
-        visit(entry, _components);
-        _dfn_table.clear();
-        _stack.clear();
-        build_nesting();
-    }
-
-    /// \brief No copy constructor
-    Wto(const Wto &other) = delete;
-
-    /// \brief Move constructor
-    Wto(Wto &&other) = default;
-
-    /// \brief No copy assignment operator
-    Wto &operator=(const Wto &other) = delete;
-
-    /// \brief Move assignment operator
-    Wto &operator=(Wto &&other) = default;
-
-    /// \brief Destructor
-    ~Wto() = default;
-
-    /// \brief Begin iterator over the components
-    /// \brief Begin iterator over the components
-    Iterator begin() const {
-        return _components.cbegin();
-    }
-
-    /// \brief End iterator over the components
-    Iterator end() const {
-        return _components.cend();
-    }
-
-    bool isHead(const NodeT *node) const {
-        return heads.find(node) != heads.end();
-    }
-
-    typename NodeRefList::const_iterator headBegin() const {
-        return heads.cbegin();
-    }
-
-    /// \brief End iterator over the components
-    typename NodeRefList::const_iterator headEnd() const {
-        return heads.cend();
-    }
-
-
-    /// \brief Return the nesting of the given node
-    const WtoNestingT &nesting(const NodeT *n) const {
-        auto it = _nesting_table.find(n);
-        assert(it != _nesting_table.end() && "node not found");
-        return *(it->second);
-    }
-
-    /// \brief Accept the given visitor
-    void accept(WtoComponentVisitor<GraphT> &v) {
-        for (const auto &c: _components) {
-            c->accept(v);
-        }
-    }
-
-    /// \brief Dump the order, for debugging purpose
-    std::string toString() const {
-        std::string str;
-        raw_string_ostream rawstr(str);
-        rawstr << "[";
-        for (auto it = begin(), et = end(); it != et;) {
-            rawstr << (*it)->toString();
-            ++it;
-            if (it != et) {
-                rawstr << ", ";
+    /// \brief Build the tails for each loop
+    void build_tails() {
+        for (const auto &head: headRefToCycle) {
+            NodeRefList tails;
+            TailBuilder builder(_nesting_table, tails, head.first, nesting(head.first));
+            for (auto it = head.second->begin(), eit = head.second->end(); it != eit; ++it) {
+                (*it)->accept(builder);
             }
+            headRefToTails.emplace(head.first, tails);
         }
-        rawstr << "]";
-        return rawstr.str();
     }
 
 }; // end class Wto

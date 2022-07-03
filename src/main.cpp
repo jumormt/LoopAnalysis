@@ -3,280 +3,18 @@
 //
 
 #include "SVF-FE/LLVMUtil.h"
-#include "Graphs/SVFG.h"
 #include "WPA/Andersen.h"
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
-#include "EC.hpp"
 #include "LoopAnalysis.h"
 
 using namespace llvm;
 using namespace std;
 using namespace SVF;
 
-typedef ECDetection<ICFG*> ICFGECD;
-typedef SCCDetection<ECG *> ECGSCC;
-typedef ECDetection<ECG*> ECD;
-typedef SVF::LoopAnalysis<ECG> ECGLoopAnalysis;
+typedef SVF::LoopAnalysis<ICFG> ICFGLoopAnalysis;
 
-void test01() {
-    SVFUtil::outs() << "test1:\n";
-    /*
-        1->2->3->4->5
-           \   /
-            6
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {4, 6},
-                       {6, 2}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test01");
-    ECGLoopAnalysis loopAnalysis(ecg, ecg->getECGNode(1));
-    loopAnalysis.run();
-    outs() << loopAnalysis.wto().toString();
-    SVF::LoopAnalysis<ECG>::EdgeRefList &edgeSet = loopAnalysis.getEntryEdgeRefList(2);
-    return;
-}
-
-void test02() {
-    SVFUtil::outs() << "\ntest2:\n";
-    /*
-                7
-                 \
-        1->2->3->4->5
-           \   /
-            6
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {4, 6},
-                       {6, 2},
-                       {7, 4}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test02");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
-    delete ecg;
-}
-
-void test03() {
-    SVFUtil::outs() << "\ntest3:\n";
-    /*
-        1->2->3->4->5->6
-           \     /
-              7
-             /
-            8
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {5, 6},
-                       {5, 7},
-                       {7, 2},
-                       {7, 8}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test03");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-    delete johnsonDetection;
-    delete ecg;
-
-}
-
-void test04() {
-    SVFUtil::outs() << "\ntest4:\n";
-    /*
-        1->2->3->4->5->6
-           \     /
-              7
-            /^
-          8
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {5, 6},
-                       {5, 7},
-                       {7, 2},
-                       {8, 7}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test04");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
-    delete ecg;
-
-}
-
-void test05() {
-    SVFUtil::outs() << "\ntest5:\n";
-    /*      8
-          /  \
-        1->2->3->4->5->6
-           \     /
-              7
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {5, 6},
-                       {5, 7},
-                       {7, 2},
-                       {1, 8},
-                       {8, 3}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test05");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
-    delete ecg;
-}
-
-void test06() {
-    SVFUtil::outs() << "\ntest6:\n";
-    /*
-                 8
-             /     \
-        1->2->3->4->5->6
-           \     /
-              7
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {5, 6},
-                       {5, 7},
-                       {7, 2},
-                       {5, 8},
-                       {8, 2}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test06");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
-    delete ecg;
-}
-
-void test07() {
-    SVFUtil::outs() << "\ntest7:\n";
-    /*
-                 8
-             /     \
-        1->2->3->4->5->6
-           \     /
-           |  7
-           | /
-           9
-
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 1},
-                       {1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {5, 6},
-                       {5, 7},
-                       {7, 2},
-                       {5, 8},
-                       {8, 2},
-                       {2, 9},
-                       {9, 7},
-                       {4, 8}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test07");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
-    delete ecg;
-}
-
-void test08() {
-    SVFUtil::outs() << "\ntest8:\n";
-    /*
-                 8
-             /     \
-        1->2->3->4->5->6
-           \     /
-              7
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1, 2},
-                       {2, 3},
-                       {3, 4},
-                       {4, 5},
-                       {5, 6},
-                       {5, 7},
-                       {7, 2},
-                       {5, 8},
-                       {8, 2},
-                       {3, 9},
-                       {9, 2}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test08");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
-    delete ecg;
-}
-
-void test09() {
-    SVFUtil::outs() << "\ntest9:\n";
-    /*
-              8     10
-            / 9  \/   \
-        1->2->3->4->5->6
-           \     /
-              7
-              */
-    ECG *ecg = new ECG();
-    NodePairVector nPV{{1,  2},
-                       {2,  3},
-                       {3,  4},
-                       {4,  5},
-                       {5,  6},
-                       {5,  7},
-                       {7,  2},
-                       {5,  8},
-                       {8,  2},
-                       {3,  9},
-                       {9,  2},
-                       {6,  10},
-                       {10, 4}};
-    ecg->addECGEdgesFromVector(nPV);
-    ecg->dump("test09");
-    ECD *johnsonDetection = new ECD(ecg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
-    delete ecg;
-}
-
-
-int test10(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 
     int arg_num = 0;
@@ -301,11 +39,15 @@ int test10(int argc, char ** argv)
 
     /// ICFG
     ICFG* icfg = pag->getICFG();
-
-    ICFGECD *johnsonDetection = new ICFGECD(icfg);
-    johnsonDetection->simpleCycle();
-
-    delete johnsonDetection;
+    ICFGNode* mainEntry;
+    for (const auto &func: *svfModule) {
+        if (func->getName() == "main") {
+            mainEntry = icfg->getFunEntryICFGNode(func);
+        }
+    }
+    ICFGLoopAnalysis loopAnalysis(icfg, mainEntry);
+    loopAnalysis.run();
+    outs() << loopAnalysis.wto();
 
     AndersenWaveDiff::releaseAndersenWaveDiff();
     SVFIR::releaseSVFIR();
@@ -314,11 +56,6 @@ int test10(int argc, char ** argv)
     SVF::LLVMModuleSet::releaseLLVMModuleSet();
 
     llvm::llvm_shutdown();
-    return 0;
-}
-
-int main(int argc, char ** argv){
-    test01();
     return 0;
 }
 
