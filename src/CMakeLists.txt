@@ -4,7 +4,7 @@ file (GLOB SOURCES
 )
 add_executable(loopa ${SOURCES})
 
-target_link_libraries(loopa ${SVF_LIB} ${LLVMCudd} ${llvm_libs})
+target_link_libraries(loopa ${SVF_LIB} ${llvm_libs})
 
 target_link_libraries(loopa ${Z3_DIR}/bin/libz3.a )
 set_target_properties( loopa PROPERTIES
