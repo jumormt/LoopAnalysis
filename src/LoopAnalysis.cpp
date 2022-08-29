@@ -25,12 +25,17 @@ void LoopAnalysis<GraphT>::run() {
                 const WtoNestingT &tail_nesting = _wtoT.nesting(tail);
                 for (const auto &e: tail->getOutEdges()) {
                     const NodeT *out = e->getDstNode();
-                    if (_wtoT.nesting(out) < tail_nesting) {
-                        _tailToExitEdges[tail].insert(e);
-                        _exitEdges.insert(e);
-                    } else {
+                    if (out == head) {
                         _tailToInEdges[tail].insert(e);
                         _inEdges.insert(e);
+                    } else {
+                        if (_wtoT.nesting(out) < tail_nesting) {
+                            _tailToExitEdges[tail].insert(e);
+                            _exitEdges.insert(e);
+                        } else {
+                            _tailToInEdges[tail].insert(e);
+                            _inEdges.insert(e);
+                        }
                     }
                 }
             }
