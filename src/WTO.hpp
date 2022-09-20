@@ -473,6 +473,12 @@ public:
         return *(it->second);
     }
 
+    /// \brief Return the nesting of the given node
+    inline bool in_nesting_table(const NodeT *n) const {
+        auto it = _nesting_table.find(n);
+        return it != _nesting_table.end();
+    }
+
     /// \brief Accept the given visitor
     void accept(WtoComponentVisitor<GraphT> &v) {
         for (const auto &c: _components) {

@@ -14,6 +14,7 @@ void LoopAnalysis<GraphT>::run() {
         const WtoNestingT &cycle_nesting = _wtoT.nesting(head);
         for (const auto &edge: head->getInEdges()) {
             const NodeT *pre = edge->getSrcNode();
+            if(!_wtoT.in_nesting_table(pre)) continue;
             if (_wtoT.nesting(pre) <= cycle_nesting) {
                 _headToEntryEdges[head].insert(edge);
                 _entryEdges.insert(edge);
@@ -29,6 +30,7 @@ void LoopAnalysis<GraphT>::run() {
                         _tailToInEdges[tail].insert(e);
                         _inEdges.insert(e);
                     } else {
+                        if(!_wtoT.in_nesting_table(out)) continue;
                         if (_wtoT.nesting(out) < tail_nesting) {
                             _tailToExitEdges[tail].insert(e);
                             _exitEdges.insert(e);
