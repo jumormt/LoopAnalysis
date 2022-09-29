@@ -19,6 +19,8 @@ static llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional,
 
 typedef SVF::LoopAnalysis<ICFG, ICFGWTO> ICFGLoopAnalysis;
 
+typedef SVF::LoopAnalysis<PTACallGraph, Wto<PTACallGraph>> CallLoopAnalysis;
+
 int main(int argc, char **argv) {
 
     int arg_num = 0;
@@ -38,11 +40,15 @@ int main(int argc, char **argv) {
     /// Build Program Assignment Graph (SVFIR)
     SVFIRBuilder builder;
     SVFIR *pag = builder.build(svfModule);
+    AndersenWaveDiff *ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    PTACallGraph* ptaCallGraph = ander->getPTACallGraph();
 
 
     /// ICFG
     ICFG *icfg = pag->getICFG();
+    icfg->updateCallGraph(ptaCallGraph);
     ICFGNode *entry;
+    PTACallGraphNode* callEntry;
     Map<const SVFFunction *, ICFGLoopAnalysis> funcToICFGLoopAnalysis;
     for (const auto &func: *svfModule) {
         if (SVFUtil::isExtCall(func)) continue;
@@ -51,7 +57,13 @@ int main(int argc, char **argv) {
         loopAnalysis.run();
         outs() << loopAnalysis.wto();
         funcToICFGLoopAnalysis[func] = std::move(loopAnalysis);
+        if(func->getName() == "main")
+            callEntry = ptaCallGraph->getCallGraphNode(func);
     }
+    ptaCallGraph->dump("callGraph");
+    CallLoopAnalysis callLoopAnalysis(ptaCallGraph, callEntry);
+    callLoopAnalysis.run();
+
 
 
     AndersenWaveDiff::releaseAndersenWaveDiff();

@@ -14,13 +14,18 @@ void LoopAnalysis<GraphT, WtoT>::run() {
         const WtoNestingT &cycle_nesting = _wtoT.nesting(head);
         for (const auto &edge: head->getInEdges()) {
             const NodeT *pre = edge->getSrcNode();
-            if(!_wtoT.in_nesting_table(pre)) continue;
-            if (_wtoT.nesting(pre) <= cycle_nesting) {
-                _headToEntryEdges[head].insert(edge);
-                _entryEdges.insert(edge);
-            } else {
+            if (!_wtoT.in_nesting_table(pre)) continue;
+            if (pre == head) {
                 _headToBackEdges[head].insert(edge);
                 _backEdges.insert(edge);
+            } else {
+                if (_wtoT.nesting(pre) <= cycle_nesting) {
+                    _headToEntryEdges[head].insert(edge);
+                    _entryEdges.insert(edge);
+                } else {
+                    _headToBackEdges[head].insert(edge);
+                    _backEdges.insert(edge);
+                }
             }
             for (const auto &tail: _wtoT.getTails(head)) {
                 const WtoNestingT &tail_nesting = _wtoT.nesting(tail);
@@ -30,7 +35,7 @@ void LoopAnalysis<GraphT, WtoT>::run() {
                         _tailToInEdges[tail].insert(e);
                         _inEdges.insert(e);
                     } else {
-                        if(!_wtoT.in_nesting_table(out)) continue;
+                        if (!_wtoT.in_nesting_table(out)) continue;
                         if (_wtoT.nesting(out) < tail_nesting) {
                             _tailToExitEdges[tail].insert(e);
                             _exitEdges.insert(e);
