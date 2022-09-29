@@ -7,12 +7,17 @@
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
 #include "LoopAnalysis.cpp"
+#include "ICFGWTO.hpp"
 
 using namespace llvm;
 using namespace std;
 using namespace SVF;
 
-typedef SVF::LoopAnalysis<ICFG> ICFGLoopAnalysis;
+static llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional,
+                                                llvm::cl::desc("<input bitcode>"), llvm::cl::init("-"));
+
+
+typedef SVF::LoopAnalysis<ICFG, ICFGWTO> ICFGLoopAnalysis;
 
 int main(int argc, char ** argv)
 {
@@ -20,7 +25,7 @@ int main(int argc, char ** argv)
     int arg_num = 0;
     char **arg_value = new char*[argc];
     std::vector<std::string> moduleNameVec;
-    SVFUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
+    LLVMUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
     cl::ParseCommandLineOptions(arg_num, arg_value,
                                 "Whole Program Points-to Analysis\n");
 

@@ -7,8 +7,8 @@
 using namespace SVF;
 
 
-template<typename GraphT>
-void LoopAnalysis<GraphT>::run() {
+template<typename GraphT, typename WtoT>
+void LoopAnalysis<GraphT, WtoT>::run() {
     for (auto it = _wtoT.headBegin(), eit = _wtoT.headEnd(); it != eit; ++it) {
         const NodeT *head = it->first;
         const WtoNestingT &cycle_nesting = _wtoT.nesting(head);

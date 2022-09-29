@@ -10,12 +10,11 @@
 
 namespace SVF {
 
-template<typename GraphT>
+template<typename GraphT, typename WtoT>
 class LoopAnalysis {
 public:
     typedef typename GraphT::NodeType NodeT;
     typedef typename GraphT::EdgeType EdgeT;
-    typedef Wto<GraphT> WtoT;
     typedef Set<const EdgeT *> EdgeRefList;
     typedef Map<const NodeT *, EdgeRefList> NodeRefToEdgeListMap;
     typedef typename WtoT::WtoNestingT WtoNestingT;

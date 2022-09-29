@@ -379,7 +379,7 @@ public:
     typedef WtoCycle<GraphT> WtoCycleT;
     typedef Set<const NodeT *> NodeRefList;
 
-private:
+protected:
     typedef const WtoComponentT *WtoComponentPtr;
     typedef std::list<WtoComponentPtr> WtoComponentRefList;
     typedef Set <WtoComponentPtr> WtoComponentRefSet;
@@ -396,7 +396,7 @@ public:
     /// \brief Iterator over the components
     typedef typename WtoComponentRefList::const_iterator Iterator;
 
-private:
+protected:
     WtoComponentRefList _components;
     WtoComponentRefSet _allComponents;
     NodeRefToWtoCycleMap headRefToCycle;
@@ -407,6 +407,9 @@ private:
     Stack _stack;
 
 public:
+    /// \brief Compute the weak topological order of the given graph
+    explicit Wto() : _num(0) {}
+
     /// \brief Compute the weak topological order of the given graph
     explicit Wto(const NodeT *entry) : _num(0) {
         visit(entry, _components);
@@ -583,7 +586,7 @@ private:
 
     };
 
-private:
+protected:
     /// \brief Return the depth-first number of the given node
     Dfn dfn(const NodeT *n) const {
         auto it = _dfn_table.find(n);
@@ -642,7 +645,7 @@ private:
     /// \brief Visit the given node
     ///
     /// Algorithm to build a weak topological order of a graph
-    Dfn visit(const NodeT *vertex, WtoComponentRefList &partition) {
+    virtual Dfn visit(const NodeT *vertex, WtoComponentRefList &partition) {
         Dfn head(0);
         Dfn min(0);
         bool loop;
