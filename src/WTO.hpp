@@ -513,7 +513,7 @@ public:
     }
     //@}
 
-private:
+protected:
     /// \brief Visitor to build the nestings of each node
     class NestingBuilder final
             : public WtoComponentVisitor<GraphT> {
@@ -546,8 +546,8 @@ private:
     }; // end class NestingBuilder
 
     /// \brief Visitor to build the tails of each head/loop
-    class TailBuilder final : public WtoComponentVisitor<GraphT> {
-    private:
+    class TailBuilder : public WtoComponentVisitor<GraphT> {
+    protected:
         NodeRefList &_tails;
         const WtoNestingT &_headNesting;
         const NodeT *_head;
@@ -566,7 +566,7 @@ private:
             }
         }
 
-        void visit(const WtoVertexT &vertex) override {
+        virtual void visit(const WtoVertexT &vertex) override {
             for (const auto &edge: vertex.node()->getOutEdges()) {
                 const NodeT *succ = edge->getDstNode();
                 const WtoNestingT &succNesting = nesting(succ);
@@ -576,7 +576,7 @@ private:
             }
         }
 
-    private:
+    protected:
         /// \brief Return the nesting of the given node
         const WtoNestingT &nesting(const NodeT *n) const {
             auto it = _nesting_table.find(n);
@@ -693,7 +693,7 @@ protected:
     }
 
     /// \brief Build the tails for each loop
-    void build_tails() {
+    virtual void build_tails() {
         for (const auto &head: headRefToCycle) {
             NodeRefList tails;
             TailBuilder builder(_nesting_table, tails, head.first, nesting(head.first));

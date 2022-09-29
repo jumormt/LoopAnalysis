@@ -19,40 +19,40 @@ static llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional,
 
 typedef SVF::LoopAnalysis<ICFG, ICFGWTO> ICFGLoopAnalysis;
 
-int main(int argc, char ** argv)
-{
+int main(int argc, char **argv) {
 
     int arg_num = 0;
-    char **arg_value = new char*[argc];
+    char **arg_value = new char *[argc];
     std::vector<std::string> moduleNameVec;
     LLVMUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
     cl::ParseCommandLineOptions(arg_num, arg_value,
                                 "Whole Program Points-to Analysis\n");
 
-    if (Options::WriteAnder == "ir_annotator")
-    {
+    if (Options::WriteAnder == "ir_annotator") {
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
 
-    SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
+    SVFModule *svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     svfModule->buildSymbolTableInfo();
 
     /// Build Program Assignment Graph (SVFIR)
     SVFIRBuilder builder;
-    SVFIR* pag = builder.build(svfModule);
+    SVFIR *pag = builder.build(svfModule);
 
 
     /// ICFG
-    ICFG* icfg = pag->getICFG();
-    ICFGNode* mainEntry;
+    ICFG *icfg = pag->getICFG();
+    ICFGNode *entry;
+    Map<const SVFFunction *, ICFGLoopAnalysis> funcToICFGLoopAnalysis;
     for (const auto &func: *svfModule) {
-        if (func->getName() == "main") {
-            mainEntry = icfg->getFunEntryICFGNode(func);
-        }
+        if (SVFUtil::isExtCall(func)) continue;
+        entry = icfg->getFunEntryICFGNode(func);
+        ICFGLoopAnalysis loopAnalysis(icfg, entry);
+        loopAnalysis.run();
+        outs() << loopAnalysis.wto();
+        funcToICFGLoopAnalysis[func] = std::move(loopAnalysis);
     }
-    ICFGLoopAnalysis loopAnalysis(icfg, mainEntry);
-    loopAnalysis.run();
-    outs() << loopAnalysis.wto();
+
 
     AndersenWaveDiff::releaseAndersenWaveDiff();
     SVFIR::releaseSVFIR();

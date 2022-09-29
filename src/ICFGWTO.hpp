@@ -8,6 +8,9 @@ class ICFGWTO : public Wto<ICFG> {
 
 public:
     /// \brief Compute the weak topological order of the given graph
+    explicit ICFGWTO() {}
+
+    /// \brief Compute the weak topological order of the given graph
     explicit ICFGWTO(const ICFGNode *entry) {
         visit(entry, _components);
         _dfn_table.clear();
@@ -59,5 +62,34 @@ private:
         }
         return head;
     }
+
+private:
+    void build_tails() override {
+        for (const auto &head: headRefToCycle) {
+            NodeRefList tails;
+            TailBuilderD builder(_nesting_table, tails, head.first, nesting(head.first));
+            for (auto it = head.second->begin(), eit = head.second->end(); it != eit; ++it) {
+                (*it)->accept(builder);
+            }
+            headRefToTails.emplace(head.first, tails);
+        }
+    }
+
+    class TailBuilderD : public TailBuilder {
+    public:
+        explicit TailBuilderD(NestingTable &nesting_table, NodeRefList &tails, const NodeT *head,
+                              const WtoNestingT &headNesting) : TailBuilder(nesting_table, tails, head, headNesting) {}
+
+        void visit(const Wto<SVF::ICFG>::WtoVertexT &vertex) override {
+            if (SVFUtil::isa<CallICFGNode>(vertex.node())) return;
+            for (const auto &edge: vertex.node()->getOutEdges()) {
+                const NodeT *succ = edge->getDstNode();
+                const WtoNestingT &succNesting = nesting(succ);
+                if (succ != _head && succNesting <= _headNesting) {
+                    _tails.insert(vertex.node());
+                }
+            }
+        }
+    };
 };
 }

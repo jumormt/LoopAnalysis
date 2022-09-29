@@ -32,17 +32,20 @@ private:
     EdgeRefList _exitEdges;
 
 public:
+
+    LoopAnalysis() {}
+
     LoopAnalysis(GraphT *_graph, const NodeT *entry) : _graph(_graph), _wtoT(entry) {}
 
     virtual ~LoopAnalysis() = default;
 
-    LoopAnalysis(const LoopAnalysis &) = delete;
+    LoopAnalysis(const LoopAnalysis &) = default;
 
-    LoopAnalysis(const LoopAnalysis &&) = delete;
+    LoopAnalysis(LoopAnalysis &&) noexcept = default;
 
-    LoopAnalysis operator=(const LoopAnalysis &) = delete;
+    LoopAnalysis &operator=(const LoopAnalysis &) = default;
 
-    LoopAnalysis operator=(LoopAnalysis &&) = delete;
+    LoopAnalysis &operator=(LoopAnalysis &&) noexcept = default;
 
     virtual void run();
 
