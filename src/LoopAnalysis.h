@@ -57,6 +57,10 @@ public:
         return _headToBackEdges;
     }
 
+    const NodeRefToEdgeRefSetMap &getHeadToEntryEdges() const {
+        return _headToEntryEdges;
+    }
+
     const WtoT &wto() const {
         return _wtoT;
     }

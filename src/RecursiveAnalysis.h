@@ -16,20 +16,20 @@ public:
     typedef SVF::LoopAnalysis<PTACallGraph, Wto<PTACallGraph>> CallLoopAnalysis;
     typedef typename ICFG::NodeType NodeT;
     typedef typename ICFG::EdgeType EdgeT;
-    typedef Set<const EdgeT *> EdgeRefList;
-    typedef Map<const NodeT *, EdgeRefList> NodeRefToEdgeListMap;
+    typedef Set<const EdgeT *> EdgeRefSet;
+    typedef Map<const NodeT *, EdgeRefSet> NodeRefToEdgeSetMap;
 
 private:
     CallLoopAnalysis _callLoopAnalysis;
 
-    NodeRefToEdgeListMap _headToEntryEdges;
-    NodeRefToEdgeListMap _headToBackEdges;
-    NodeRefToEdgeListMap _tailToExitEdges;
-    NodeRefToEdgeListMap _tailToInEdges;
-    EdgeRefList _entryEdges;
-    EdgeRefList _backEdges;
-    EdgeRefList _inEdges;
-    EdgeRefList _exitEdges;
+    NodeRefToEdgeSetMap _headToEntryEdges;
+    NodeRefToEdgeSetMap _headToBackEdges;
+    NodeRefToEdgeSetMap _tailToExitEdges;
+    NodeRefToEdgeSetMap _tailToInEdges;
+    EdgeRefSet _entryEdges;
+    EdgeRefSet _backEdges;
+    EdgeRefSet _inEdges;
+    EdgeRefSet _exitEdges;
 public:
     RecursiveAnalysis(PTACallGraph *ptaCallGraph, const PTACallGraphNode *entry) : _callLoopAnalysis(ptaCallGraph,
                                                                                                      entry) {}

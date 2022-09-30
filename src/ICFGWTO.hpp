@@ -35,7 +35,8 @@ private:
             const NodeT *succ = (*it)->getDstNode();
             if (const CallICFGNode *callICFGNode = SVFUtil::dyn_cast<CallICFGNode>(vertex))
                 succ = callICFGNode->getRetICFGNode();
-
+            if (SVFUtil::isa<FunExitICFGNode>(vertex))
+                continue;
             Dfn succ_dfn = dfn(succ);
             if (succ_dfn == Dfn(0)) {
                 min = visit(succ, partition);
@@ -81,7 +82,7 @@ private:
                               const WtoNestingT &headNesting) : TailBuilder(nesting_table, tails, head, headNesting) {}
 
         void visit(const Wto<SVF::ICFG>::WtoVertexT &vertex) override {
-            if (SVFUtil::isa<CallICFGNode>(vertex.node())) return;
+            if (SVFUtil::isa<CallICFGNode>(vertex.node()) || SVFUtil::isa<FunExitICFGNode>(vertex.node())) return;
             for (const auto &edge: vertex.node()->getOutEdges()) {
                 const NodeT *succ = edge->getDstNode();
                 const WtoNestingT &succNesting = nesting(succ);
