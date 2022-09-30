@@ -420,13 +420,13 @@ public:
     }
 
     /// \brief No copy constructor
-    Wto(const Wto &other) = delete;
+    Wto(const Wto &other) = default;
 
     /// \brief Move constructor
     Wto(Wto &&other) = default;
 
     /// \brief No copy assignment operator
-    Wto &operator=(const Wto &other) = delete;
+    Wto &operator=(const Wto &other) = default;
 
     /// \brief Move assignment operator
     Wto &operator=(Wto &&other) = default;

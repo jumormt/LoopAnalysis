@@ -15,21 +15,25 @@ class LoopAnalysis {
 public:
     typedef typename GraphT::NodeType NodeT;
     typedef typename GraphT::EdgeType EdgeT;
-    typedef Set<const EdgeT *> EdgeRefList;
-    typedef Map<const NodeT *, EdgeRefList> NodeRefToEdgeListMap;
+    typedef Set<const EdgeT *> EdgeRefSet;
+    typedef Set<const NodeT *> NodeRefSet;
+    typedef Map<const NodeT *, EdgeRefSet> NodeRefToEdgeRefSetMap;
     typedef typename WtoT::WtoNestingT WtoNestingT;
-    typedef typename WtoT::NodeRefList NodeRefList;
+    typedef Map<const EdgeT *, NodeRefSet> EdgeRefToNodeRefSetMap;
+
 private:
     GraphT *_graph;
     WtoT _wtoT;
-    NodeRefToEdgeListMap _headToEntryEdges;
-    NodeRefToEdgeListMap _headToBackEdges;
-    NodeRefToEdgeListMap _tailToExitEdges;
-    NodeRefToEdgeListMap _tailToInEdges;
-    EdgeRefList _entryEdges;
-    EdgeRefList _backEdges;
-    EdgeRefList _inEdges;
-    EdgeRefList _exitEdges;
+    NodeRefToEdgeRefSetMap _headToEntryEdges;
+    NodeRefToEdgeRefSetMap _headToBackEdges;
+    NodeRefToEdgeRefSetMap _tailToExitEdges;
+    NodeRefToEdgeRefSetMap _tailToInEdges;
+    EdgeRefToNodeRefSetMap _inEdgeToHeads;
+    EdgeRefToNodeRefSetMap _exitEdgeToHeads;
+    EdgeRefSet _entryEdges;
+    EdgeRefSet _backEdges;
+    EdgeRefSet _inEdges;
+    EdgeRefSet _exitEdges;
 
 public:
 
@@ -49,8 +53,16 @@ public:
 
     virtual void run();
 
+    const NodeRefToEdgeRefSetMap &getHeadToBackEdges() const {
+        return _headToBackEdges;
+    }
+
     const WtoT &wto() const {
         return _wtoT;
+    }
+
+    const GraphT *graph() const {
+        return _graph;
     }
 
     bool isHead(const NodeT *node) const {
@@ -81,21 +93,33 @@ public:
         return _wtoT.isHead(_graph->getGNode(nodeId));
     }
 
-    EdgeRefList &getBackEdgeRefList(const NodeT *node) {
+    NodeRefSet &getInEdgeHeads(const EdgeT *backEdge) {
+        auto it = _inEdgeToHeads.find(backEdge);
+        assert(it != _inEdgeToHeads.end() && "not in edge!");
+        return it->second;
+    }
+
+    NodeRefSet &getExitEdgeHeads(const EdgeT *backEdge) {
+        auto it = _exitEdgeToHeads.find(backEdge);
+        assert(it != _exitEdgeToHeads.end() && "not exit edge!");
+        return it->second;
+    }
+
+    EdgeRefSet &getBackEdgeRefList(const NodeT *node) {
         assert(isHead(node) && "not head!");
         auto it = _headToBackEdges.find(node);
         assert(it != _headToBackEdges.end() && "head does not have back edge!");
         return it->second;
     }
 
-    EdgeRefList &getEntryEdgeRefList(const NodeT *node) {
+    EdgeRefSet &getEntryEdgeRefList(const NodeT *node) {
         assert(isHead(node) && "not head!");
         auto it = _headToEntryEdges.find(node);
         assert(it != _headToEntryEdges.end() && "head does not have entry edge!");
         return it->second;
     }
 
-    EdgeRefList &getBackEdgeRefList(u32_t nodeId) {
+    EdgeRefSet &getBackEdgeRefList(u32_t nodeId) {
         const NodeT *node = _graph->getGNode(nodeId);
         assert(isHead(node) && "not head!");
         auto it = _headToBackEdges.find(node);
@@ -103,7 +127,7 @@ public:
         return it->second;
     }
 
-    EdgeRefList &getEntryEdgeRefList(u32_t nodeId) {
+    EdgeRefSet &getEntryEdgeRefList(u32_t nodeId) {
         const NodeT *node = _graph->getGNode(nodeId);
         assert(isHead(node) && "not head!");
         auto it = _headToEntryEdges.find(node);
@@ -111,16 +135,16 @@ public:
         return it->second;
     }
 
-    const NodeRefList &getTails(u32_t nodeId) {
+    const NodeRefSet &getTails(u32_t nodeId) {
         const NodeT *node = _graph->getGNode(nodeId);
         return getTails(node);
     }
 
-    const NodeRefList &getTails(const NodeT *node) {
+    const NodeRefSet &getTails(const NodeT *node) {
         return _wtoT.getTails(node);
     }
 
-    EdgeRefList &getExitEdgeRefList(u32_t nodeId) {
+    EdgeRefSet &getExitEdgeRefList(u32_t nodeId) {
         const NodeT *node = _graph->getGNode(nodeId);
         assert(isTail(node) && "not tail!");
         auto it = _tailToExitEdges.find(node);
@@ -128,14 +152,14 @@ public:
         return it->second;
     }
 
-    EdgeRefList &getExitEdgeRefList(const NodeT *node) {
+    EdgeRefSet &getExitEdgeRefList(const NodeT *node) {
         assert(isTail(node) && "not tail!");
         auto it = _tailToExitEdges.find(node);
         assert(it != _tailToExitEdges.end() && "tail does not have exit edge!");
         return it->second;
     }
 
-    EdgeRefList &getInEdgeRefList(u32_t nodeId) {
+    EdgeRefSet &getInEdgeRefList(u32_t nodeId) {
         const NodeT *node = _graph->getGNode(nodeId);
         assert(isTail(node) && "not tail!");
         auto it = _tailToInEdges.find(node);
@@ -143,7 +167,7 @@ public:
         return it->second;
     }
 
-    EdgeRefList &getInEdgeRefList(const NodeT *node) {
+    EdgeRefSet &getInEdgeRefList(const NodeT *node) {
         assert(isTail(node) && "not tail!");
         auto it = _tailToInEdges.find(node);
         assert(it != _tailToInEdges.end() && "tail does not have in edge!");

@@ -33,14 +33,17 @@ void LoopAnalysis<GraphT, WtoT>::run() {
                     const NodeT *out = e->getDstNode();
                     if (out == head) {
                         _tailToInEdges[tail].insert(e);
+                        _inEdgeToHeads[edge].insert(head);
                         _inEdges.insert(e);
                     } else {
                         if (!_wtoT.in_nesting_table(out)) continue;
                         if (_wtoT.nesting(out) < tail_nesting) {
                             _tailToExitEdges[tail].insert(e);
+                            _exitEdgeToHeads[edge].insert(head);
                             _exitEdges.insert(e);
                         } else {
                             _tailToInEdges[tail].insert(e);
+                            _inEdgeToHeads[edge].insert(head);
                             _inEdges.insert(e);
                         }
                     }

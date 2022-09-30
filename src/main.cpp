@@ -7,6 +7,7 @@
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
 #include "LoopAnalysis.cpp"
+#include "RecursiveAnalysis.h"
 #include "ICFGWTO.hpp"
 
 using namespace llvm;
@@ -47,6 +48,7 @@ int main(int argc, char **argv) {
     /// ICFG
     ICFG *icfg = pag->getICFG();
     icfg->updateCallGraph(ptaCallGraph);
+    icfg->dump("ICFG");
     ICFGNode *entry;
     PTACallGraphNode* callEntry;
     Map<const SVFFunction *, ICFGLoopAnalysis> funcToICFGLoopAnalysis;
@@ -63,6 +65,9 @@ int main(int argc, char **argv) {
     ptaCallGraph->dump("callGraph");
     CallLoopAnalysis callLoopAnalysis(ptaCallGraph, callEntry);
     callLoopAnalysis.run();
+
+    RecursiveAnalysis recur(ptaCallGraph, callEntry);
+    recur.run();
 
 
 
