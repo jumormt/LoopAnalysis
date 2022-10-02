@@ -9,6 +9,8 @@
 #include "LoopAnalysis.cpp"
 #include "RecursiveAnalysis.h"
 #include "ICFGWTO.hpp"
+#include "ICFGWrapper.h"
+#include "IntraLoopFlattenHandler.h"
 
 using namespace llvm;
 using namespace std;
@@ -48,7 +50,10 @@ int main(int argc, char **argv) {
     /// ICFG
     ICFG *icfg = pag->getICFG();
     icfg->updateCallGraph(ptaCallGraph);
-    icfg->dump("ICFG");
+    ICFGWrapperBuilder icfgWrapperBuilder;
+    icfgWrapperBuilder.build(icfg);
+    const std::unique_ptr<ICFGWrapper>& icfgWrapper = ICFGWrapper::getICFGWrapper();
+//    icfgWrapper->dump("ICFG");
     ICFGNode *entry;
     PTACallGraphNode* callEntry;
     Map<const SVFFunction *, ICFGLoopAnalysis> funcToICFGLoopAnalysis;
@@ -69,6 +74,8 @@ int main(int argc, char **argv) {
     RecursiveAnalysis recur(ptaCallGraph, callEntry);
     recur.run();
 
+    IntraLoopFlattenHandler intraLoopFlattenHandler;
+    intraLoopFlattenHandler.runOnModule(svfModule);
 
 
     AndersenWaveDiff::releaseAndersenWaveDiff();

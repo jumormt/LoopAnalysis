@@ -3,6 +3,7 @@
 //
 
 #include "RecursiveAnalysis.h"
+#include "LoopAnalysis.cpp"
 
 using namespace SVF;
 
@@ -16,6 +17,7 @@ void RecursiveAnalysis::run() {
         const ICFGNode *head = icfg->getFunEntryICFGNode(item.first->getFunction());
         const ICFGNode *revHead = icfg->getFunExitICFGNode(item.first->getFunction());
         auto it = headToEntrys.find(item.first);
+        if(it == headToEntrys.end()) continue;
         assert(it != headToEntrys.end());
         for (const auto &entry: it->second) {
             const CallICFGNode *callNode = ptaCallGraph->getCallSite(entry->getCallSiteID());

@@ -53,6 +53,14 @@ public:
 
     virtual void run();
 
+    inline bool empty() const {
+        return _headToBackEdges.empty();
+    }
+
+    inline u32_t size() const {
+        return _headToBackEdges.size();
+    }
+
     const NodeRefToEdgeRefSetMap &getHeadToBackEdges() const {
         return _headToBackEdges;
     }

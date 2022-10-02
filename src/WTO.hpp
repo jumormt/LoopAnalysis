@@ -238,7 +238,7 @@ public:
 
     /// \brief Dump the vertex, for debugging purpose
     std::string toString() const override {
-        return _node->toString();
+        return std::to_string(node()->getId());
     }
 
     /// ClassOf
@@ -316,7 +316,7 @@ public:
         std::string str;
         raw_string_ostream rawstr(str);
         rawstr << "(";
-        rawstr << _head->toString() << ", ";
+        rawstr << std::to_string(_head->getId()) << ", ";
         for (auto it = begin(), et = end(); it != et;) {
             rawstr << (*it)->toString();
             ++it;
@@ -566,7 +566,7 @@ protected:
             }
         }
 
-        virtual void visit(const WtoVertexT &vertex) override {
+        virtual void visit(const WtoVertexT &vertex) {
             for (const auto &edge: vertex.node()->getOutEdges()) {
                 const NodeT *succ = edge->getDstNode();
                 const WtoNestingT &succNesting = nesting(succ);
@@ -638,6 +638,7 @@ protected:
             }
         }
         const WtoCycleT *ptr = newCycle(vertex, partition);
+        std::cout << ptr->toString() << "\n";
         headRefToCycle.emplace(vertex, ptr);
         return ptr;
     }
