@@ -11,6 +11,7 @@
 #include "ICFGWTO.hpp"
 #include "ICFGWrapper.h"
 #include "IntraLoopFlattenHandler.h"
+#include "InterLoopFlattenHandler.h"
 
 using namespace llvm;
 using namespace std;
@@ -76,6 +77,9 @@ int main(int argc, char **argv) {
 
     IntraLoopFlattenHandler intraLoopFlattenHandler;
     intraLoopFlattenHandler.runOnModule(svfModule);
+
+    InterLoopFlattenHandler interLoopFlattenHandler;
+    interLoopFlattenHandler.runOnModule(svfModule);
 
 
     AndersenWaveDiff::releaseAndersenWaveDiff();

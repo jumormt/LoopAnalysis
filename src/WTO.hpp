@@ -638,7 +638,7 @@ protected:
             }
         }
         const WtoCycleT *ptr = newCycle(vertex, partition);
-        std::cout << ptr->toString() << "\n";
+//        std::cout << ptr->toString() << "\n";
         headRefToCycle.emplace(vertex, ptr);
         return ptr;
     }

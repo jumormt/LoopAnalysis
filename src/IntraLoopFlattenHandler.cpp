@@ -21,7 +21,6 @@ void IntraLoopFlattenHandler::runOnModule(SVFModule *svfModule) {
     for (const auto &func: *svfModule) {
         outs() << func->getName() << "\n";
         if (SVFUtil::isExtCall(func)) continue;
-        if(func->getName() != "read_token") continue;
         entry = icfgWrapper->getICFGNodeWrapper(icfg->getFunEntryICFGNode(func)->getId());
         while (true) {
             ICFGWrapperLoopAnalysis loopAnalysis(icfgWrapper, entry);
@@ -45,7 +44,7 @@ void IntraLoopFlattenHandler::runOnModule(SVFModule *svfModule) {
                     for (const auto &tgtNode: tgtNodes) {
                         if (ICFGEdgeWrapper *edgeWrapper = icfgWrapper->hasICFGEdgeWrapper(srcNode, tgtNode)) {
                             edgeWrapper->setICFGEdge(nullptr);
-                            edgesToRm.erase(edgeWrapper);
+//                            edgesToRm.erase(edgeWrapper);
                         } else {
                             icfgWrapper->addICFGEdgeWrapper(new ICFGEdgeWrapper(srcNode, tgtNode, nullptr));
                         }
@@ -59,5 +58,5 @@ void IntraLoopFlattenHandler::runOnModule(SVFModule *svfModule) {
             }
         }
     }
-//    ICFGWrapper::getICFGWrapper()->dump("ICFGWrapper");
+    ICFGWrapper::getICFGWrapper()->dump("ICFGWrapper");
 }

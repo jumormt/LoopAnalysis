@@ -4,15 +4,17 @@
 
 #ifndef LOOPANALYSIS_INTRALOOPFLATTENHANDLER_H
 #define LOOPANALYSIS_INTRALOOPFLATTENHANDLER_H
-#include "Util/SVFModule.h"
+
+#include "LoopFlattenHandler.h"
 
 namespace SVF {
-class IntraLoopFlattenHandler {
+class IntraLoopFlattenHandler : public LoopFlattenHandler {
 public:
     IntraLoopFlattenHandler() = default;
+
     ~IntraLoopFlattenHandler() = default;
 
-    void runOnModule(SVFModule *svfModule);
+    void runOnModule(SVFModule *svfModule) override;
 }; // end class IntraLoopFlattenHandler
 } // end namespace SVF
 
