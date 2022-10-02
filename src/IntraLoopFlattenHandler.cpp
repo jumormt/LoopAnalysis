@@ -22,41 +22,38 @@ void IntraLoopFlattenHandler::runOnModule(SVFModule *svfModule) {
         outs() << func->getName() << "\n";
         if (SVFUtil::isExtCall(func)) continue;
         entry = icfgWrapper->getICFGNodeWrapper(icfg->getFunEntryICFGNode(func)->getId());
-        while (true) {
-            ICFGWrapperLoopAnalysis loopAnalysis(icfgWrapper, entry);
-            loopAnalysis.run();
-            if (loopAnalysis.empty()) break;
-            Set<ICFGEdgeWrapper *> edgesToRm;
-            for (const auto &it: loopAnalysis.getHeadToBackEdges()) {
-                Set<ICFGNodeWrapper *> srcNodes, tgtNodes;
-                for (const auto &edge: it.second) {
+        ICFGWrapperLoopAnalysis loopAnalysis(icfgWrapper, entry);
+        loopAnalysis.run();
+        Set<ICFGEdgeWrapper *> edgesToRm;
+        for (const auto &it: loopAnalysis.getHeadToBackEdges()) {
+            Set<ICFGNodeWrapper *> srcNodes, tgtNodes;
+            for (const auto &edge: it.second) {
+                edgesToRm.insert(const_cast<ICFGEdgeWrapper *>(edge));
+                srcNodes.insert(edge->getSrcNode());
+            }
+            for (const auto &tail: loopAnalysis.getTails(it.first)) {
+                for (const auto &edge: loopAnalysis.getExitEdgeRefList(tail)) {
                     edgesToRm.insert(const_cast<ICFGEdgeWrapper *>(edge));
-                    srcNodes.insert(edge->getSrcNode());
-                }
-                for (const auto &tail: loopAnalysis.getTails(it.first)) {
-                    for (const auto &edge: loopAnalysis.getExitEdgeRefList(tail)) {
-                        edgesToRm.insert(const_cast<ICFGEdgeWrapper *>(edge));
-                        tgtNodes.insert(edge->getDstNode());
-                    }
-                }
-
-                for (const auto &srcNode: srcNodes) {
-                    for (const auto &tgtNode: tgtNodes) {
-                        if (ICFGEdgeWrapper *edgeWrapper = icfgWrapper->hasICFGEdgeWrapper(srcNode, tgtNode)) {
-                            edgeWrapper->setICFGEdge(nullptr);
-//                            edgesToRm.erase(edgeWrapper);
-                        } else {
-                            icfgWrapper->addICFGEdgeWrapper(new ICFGEdgeWrapper(srcNode, tgtNode, nullptr));
-                        }
-                    }
+                    tgtNodes.insert(edge->getDstNode());
                 }
             }
-            for (const auto &edge: edgesToRm) {
-                if (edge && edge->getSrcNode() && edge->getDstNode() &&
-                    icfgWrapper->hasICFGEdgeWrapper(edge->getSrcNode(), edge->getDstNode()))
-                    icfgWrapper->removeICFGEdgeWrapper(edge);
+
+            for (const auto &srcNode: srcNodes) {
+                for (const auto &tgtNode: tgtNodes) {
+                    if (ICFGEdgeWrapper *edgeWrapper = icfgWrapper->hasICFGEdgeWrapper(srcNode, tgtNode)) {
+                        edgeWrapper->setICFGEdge(nullptr);
+                        edgesToRm.erase(edgeWrapper);
+                    } else {
+                        icfgWrapper->addICFGEdgeWrapper(new ICFGEdgeWrapper(srcNode, tgtNode, nullptr));
+                    }
+                }
             }
         }
+        for (const auto &edge: edgesToRm) {
+            if (edge && edge->getSrcNode() && edge->getDstNode() &&
+                icfgWrapper->hasICFGEdgeWrapper(edge->getSrcNode(), edge->getDstNode()))
+                icfgWrapper->removeICFGEdgeWrapper(edge);
+        }
     }
-    ICFGWrapper::getICFGWrapper()->dump("ICFGWrapper");
+//    ICFGWrapper::getICFGWrapper()->dump("ICFGWrapper");
 }
