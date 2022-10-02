@@ -44,6 +44,18 @@ public:
 
     RecursiveAnalysis &operator=(RecursiveAnalysis &&) noexcept = default;
 
+    bool isHead(const NodeT* node) const {
+        return _headToEntryEdges.find(node) != _headToEntryEdges.end();
+    }
+
+    bool isRecurEntryEdge(const EdgeT *edge) const {
+        return _entryEdges.find(edge) != _entryEdges.end();
+    }
+
+    bool isRecurBackEdge(const EdgeT *edge) const {
+        return _backEdges.find(edge) != _backEdges.end();
+    }
+
     void run();
 
 
